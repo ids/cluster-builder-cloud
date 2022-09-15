@@ -59,7 +59,8 @@ Copy the AMI ID from the Packer output, or you can grab it from the `aws_manifes
 Once the variables have been set correctly, execute:
 
 ```
-$ terraform validate
+$ cd terraform/ec2-k8s
+$ terraform init && terraform validate
 ```
 
 and then
