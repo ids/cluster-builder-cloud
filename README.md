@@ -2,21 +2,17 @@
 
 The original [cluster-builder](github.com/ids/cluster-builder) project became a bit bloated, and with VMWare struggling to find a footing in the new world, it was deprecated in 2020.  The best bits from the concept have been cherry picked into this new lightweight cloud based approach.
 
-There are a lot of great K8s offerings among the major cloud providers, but none really well suited for the developer or DevOps professional wanting to play or go a bit deeper into K8s.  
+There are a lot of great K8s offerings among the major cloud providers, but none really well suited for the developer or DevOps professional wanting to play or go a bit deeper into K8s.  And there is nothing quite like building your own `Kubernetes clusters` from scratch.
 
-And there is nothing quite like building your own clusters from scratch for developing a better understanding of the platform and digging into the architecture.
+This simple little _IaC_ codebase is intended to be forkable and immediately hackable for just that purpose.  It's all very fresh and barebones, but should be easily extendable.
 
-This simple little _IaC_ codebase is intended to forkable and immediately hackable for just that purpose.
-
-> Of course there is always a locally run k8s, like `microK8s`, which is very easy to get up and running... great for development, but not quite the same for infrastructure as a true `kubeadm` based cluster.    
+> There is always `microK8s`, which is very easy to get up and running... great for development, but not quite the same for as a true `kubeadm` based cluster for hacking and gitops.    
 
 In this approach, we use:
 
 1) Packer to build the AWS Ubuntu 20.22 Server based Node AMI
 2) Terraform to create the AWS EC2 resources required
 3) Ansible to provision the EC2 Instances with Kubernetes
-
-> And when you are done experimenting, a simple `terraform destory` will save you large AWS bills :)
 
 ## Tools Required:
 
@@ -73,6 +69,14 @@ And observe the EC2 resources being created.  Terrform will output configuration
 
 > One of the great things about Terraform is that once you have deployed your EC2 resources, you can still make adjustments and changes and Terraform will track the deltas and apply the required changes.  Much better then imperative tools like Ansible for provisioning infrastructure resources with a GitOps mindset and really compliments the IaS nature of K8s.
 
+And when you are done experimenting, a simple:
+
+```
+$ terraform destory
+``` 
+ 
+ Very important... it will save you from large AWS bills :)
+
 
 ## Phase 3 - Kubernetes Up and Running
 There is a [hosts.sample](clusters/ec2-k8s/hosts.sample) to use as the template.
@@ -117,7 +121,7 @@ ec2-35-183-101-234.ca-central-1.compute.amazonaws.com  ansible_host=35.183.101.2
 When your `clusters/ec2-k8s/hosts` file is updated and in place, there is a simple bash script that wraps the ansible playbook:
 
 ```
-$ bash deploy-k8s
+$ bash deploy-k8s ec2-k8s
 ```
 
 Which is really just a bash wrapper for the `ubuntu-k8s` playbook, ported largely from the original `cluster-builder` project:
@@ -140,3 +144,7 @@ kubectl --kubeconfig=clusters/ec2-k8s/kube-config get pods --all-namespaces
 ```
 
 > Just like old [cluster-builder](github.com/ids/cluster-builder) used to.
+
+It will also place associated K8s artifacts, such as PKI certs and `kube-config` into the local cluster folder.
+
+At the present time access to the cluster control plane is limited to within the subnet.  Management is generally done either from the k8s-master, or from a seperate linux instance within the ec2-k8s subnet dedicated to managing k8s clusters.  The `kube-config` can't currently be used with the public facing DNS/IPs, so you won't be able to use kubectl on the cluster outside of the EC2 subnet in the current configuration.  The `kube-config` cert won't work against the public IP/DNS names.

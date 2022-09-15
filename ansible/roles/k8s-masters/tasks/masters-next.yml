@@ -45,12 +45,12 @@
   when: k8s_version is search("1.12") or k8s_version is search("1.13")
   become: true
 
-- name: copy the master_join_cmd to the other masters
-  copy:
-    dest: /root/master_join_cmd
-    src: ../clusters/{{ cluster_pkg_folder }}/master_join_cmd
-    mode: 766
-  become: true   
+#- name: copy the master_join_cmd to the other masters
+#  copy:
+#    dest: /root/master_join_cmd
+#    src: ../clusters/{{ cluster_pkg_folder }}/master_join_cmd
+#    mode: 766
+#  become: true   
  
 - name: copy the admin.conf to the other masters
   copy:
@@ -81,13 +81,13 @@
   pause:
     seconds: 45
 
-- name: join other master to cluster
-  shell: "/root/master_join_cmd"
-  become: true   
-  register: master_join
+#- name: join other master to cluster
+#  shell: "/root/master_join_cmd"
+#  become: true   
+#  register: master_join
 
-- name: master join result
-  debug: msg="{{ master_join.stdout_lines }}"
+#- name: master join result
+#  debug: msg="{{ master_join.stdout_lines }}"
 
 - name: ensure the kubelet is enabled
   shell: systemctl enable kubelet

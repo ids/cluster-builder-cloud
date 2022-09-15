@@ -25,15 +25,15 @@
 - name: kubeadm output
   debug: msg="{{ kubeadm_out.stdout_lines }}"
 
-- name: get master join command
-  shell: "cat /tmp/kube-status | awk '/control-plane node/ {for(i=1; i<=5; i++) {getline; print}}' | tr -d '\n' | xargs "
-  register: kubeadm_master_join_cmd
+#- name: get master join command
+#  shell: "cat /tmp/kube-status | awk '/control-plane node/ {for(i=1; i<=5; i++) {getline; print}}' | tr -d '\n' | xargs "
+#  register: kubeadm_master_join_cmd
 
-- name: kubeadm master join command
-  debug: msg="{{ kubeadm_master_join_cmd.stdout }}"
+#- name: kubeadm master join command
+#  debug: msg="{{ kubeadm_master_join_cmd.stdout }}"
 
-- name: export master join command to /root/master_join_cmd
-  shell: "echo '{{ kubeadm_master_join_cmd.stdout }}' > /root/master_join_cmd "
+#- name: export master join command to /root/master_join_cmd
+#  shell: "echo '{{ kubeadm_master_join_cmd.stdout }}' > /root/master_join_cmd "
 
 - name: get worker join command
   shell: "cat /tmp/kube-status | awk '/worker node/{y=1;next}y' | tr -d '\n' |   sed 's/\\n//g' | xargs "
@@ -57,12 +57,12 @@
     flat: yes     
   become: true   
 
-- name: fetch the master_join_cmd file
-  fetch:
-    src: /root/master_join_cmd
-    dest: "{{ playbook_dir | replace('/ansible', '') }}/clusters/{{ cluster_pkg_folder }}/"
-    flat: yes     
-  become: true   
+#- name: fetch the master_join_cmd file
+#  fetch:
+#    src: /root/master_join_cmd
+#    dest: "{{ playbook_dir | replace('/ansible', '') }}/clusters/{{ cluster_pkg_folder }}/"
+#    flat: yes     
+#  become: true   
 
 - name: fetch the admin.conf file
   fetch:
