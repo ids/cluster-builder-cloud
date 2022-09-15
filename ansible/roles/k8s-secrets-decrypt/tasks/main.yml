@@ -1,0 +1,3 @@
+- name: encrypt the Kubernetes secrets
+  include: decrypt.yml
+

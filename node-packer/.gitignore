@@ -1,0 +1,5 @@
+packer_cache
+**/*.retry
+*.retry
+.vscode
+aws_manifest.json

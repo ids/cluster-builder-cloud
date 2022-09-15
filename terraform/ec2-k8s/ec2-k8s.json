@@ -1,0 +1,50 @@
+{
+  "k8s_master_dns": {
+    "sensitive": false,
+    "type": [
+      "tuple",
+      [
+        "string"
+      ]
+    ],
+    "value": [
+      "ec2-35-182-131-77.ca-central-1.compute.amazonaws.com"
+    ]
+  },
+  "k8s_master_ips": {
+    "sensitive": false,
+    "type": [
+      "tuple",
+      [
+        "string"
+      ]
+    ],
+    "value": [
+      "35.182.131.77"
+    ]
+  },
+  "k8s_worker_dns": {
+    "sensitive": false,
+    "type": [
+      "tuple",
+      [
+        "string"
+      ]
+    ],
+    "value": [
+      "ec2-15-223-5-86.ca-central-1.compute.amazonaws.com"
+    ]
+  },
+  "k8s_worker_ips": {
+    "sensitive": false,
+    "type": [
+      "tuple",
+      [
+        "string"
+      ]
+    ],
+    "value": [
+      "15.223.5.86"
+    ]
+  }
+}

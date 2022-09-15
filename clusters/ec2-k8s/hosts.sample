@@ -1,0 +1,12 @@
+[all:vars]
+cluster_name=ec2-k8s
+remote_user=ubuntu
+
+k8s_workloads_on_master=true
+
+[k8s_masters]
+ec2-99-79-9-250.ca-central-1.compute.amazonaws.com  ansible_host=99.79.9.250
+
+[k8s_workers]
+ec2-35-183-101-234.ca-central-1.compute.amazonaws.com  ansible_host=35.183.101.234
+

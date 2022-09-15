@@ -1,0 +1,20 @@
+- name: ensure all inventory host names resolve via DNS
+  local_action:
+    module: shell
+    _raw_params: "host {{ inventory_hostname }}"
+  become: false
+
+- name: enable containerd to be used by kubelet.
+  replace:
+    path: /etc/containerd/config.toml
+    regexp: 'disabled_plugins'
+    replace: '#disabled_plugins'
+  become: true
+
+- name: remove default containerd restrictions (the easy way)
+  shell: rm /etc/containerd/config.toml
+  become: true
+
+- name: restart containerd
+  shell: systemctl restart containerd
+  become: true

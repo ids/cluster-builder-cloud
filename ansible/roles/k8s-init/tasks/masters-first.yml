@@ -1,0 +1,161 @@
+- name: set k8s_cluster_token default
+  set_fact:
+    k8s_cluster_token: "9aeb42.99b7540a5833866a"
+  run_once: true
+  when: k8s_cluster_token is undefined
+
+#- name: generate the kubeadm yaml configuration
+#  template:
+#    src: templates/k8s-kube-adm-18.j2
+#    dest: /root/kube-adm.yml
+
+- name: ensure the kubelet is enabled
+  shell: systemctl enable kubelet
+
+- name: initialize cluster on first master (1.15+)
+  shell: "kubeadm init --control-plane-endpoint= > /tmp/kube-status"
+  args:
+    chdir: /root
+  ignore_errors: false
+
+- name: register cluster status
+  shell: "cat /tmp/kube-status"
+  register: kubeadm_out
+
+- name: kubeadm output
+  debug: msg="{{ kubeadm_out.stdout_lines }}"
+
+- name: get master join command
+  shell: "cat /tmp/kube-status | awk '/control-plane node/ {for(i=1; i<=5; i++) {getline; print}}' | tr -d '\n' | xargs "
+  register: kubeadm_master_join_cmd
+
+- name: kubeadm master join command
+  debug: msg="{{ kubeadm_master_join_cmd.stdout }}"
+
+- name: export master join command to /root/master_join_cmd
+  shell: "echo '{{ kubeadm_master_join_cmd.stdout }}' > /root/master_join_cmd "
+
+- name: get worker join command
+  shell: "cat /tmp/kube-status | awk '/worker node/{y=1;next}y' | tr -d '\n' |   sed 's/\\n//g' | xargs "
+  register: kubeadm_join_cmd
+
+- name: kubeadm worker join command
+  debug: msg="{{ kubeadm_join_cmd.stdout }}"
+
+- name: export worker join command to /root/join_cmd
+  shell: "echo '{{ kubeadm_join_cmd.stdout }}' > /root/join_cmd "
+
+- name: setup kubectl configuration
+  shell: rm -rf $HOME/.kube && mkdir -p $HOME/.kube && cp /etc/kubernetes/admin.conf $HOME/.kube/config && chown $(id -u):$(id -g) $HOME/.kube/config
+  args:
+    warn: false
+
+- name: fetch the join_cmd file
+  fetch:
+    src: /root/join_cmd
+    dest: "{{ playbook_dir | replace('/ansible', '') }}/clusters/{{ cluster_pkg_folder }}/"
+    flat: yes     
+  become: true   
+
+- name: fetch the master_join_cmd file
+  fetch:
+    src: /root/master_join_cmd
+    dest: "{{ playbook_dir | replace('/ansible', '') }}/clusters/{{ cluster_pkg_folder }}/"
+    flat: yes     
+  become: true   
+
+- name: fetch the admin.conf file
+  fetch:
+    src: /etc/kubernetes/admin.conf
+    dest: "{{ playbook_dir | replace('/ansible', '') }}/clusters/{{ cluster_pkg_folder }}/"
+    flat: yes     
+  become: true   
+
+- name: fetch the kube config from the first master
+  fetch:
+    src: /etc/kubernetes/admin.conf
+    dest: "{{ playbook_dir | replace('/ansible', '') }}/clusters/{{ cluster_pkg_folder }}/kube-config"
+    flat: yes     
+  become: true   
+
+- name: clean the existing PKI directory
+  local_action:
+    module: shell
+    _raw_params: "rm -rf {{ playbook_dir | replace('/ansible', '') }}/clusters/{{ cluster_pkg_folder }}/pki"
+  become: false
+  run_once: true
+  ignore_errors: true 
+
+- name: setup the PKI directory
+  local_action:
+    module: shell
+    _raw_params: "mkdir -p {{ playbook_dir | replace('/ansible', '') }}/clusters/{{ cluster_pkg_folder }}/pki"
+  become: false
+  run_once: true
+  ignore_errors: true 
+
+- name: setup the PKI etcd directory
+  local_action:
+    module: shell
+    _raw_params: "mkdir -p {{ playbook_dir | replace('/ansible', '') }}/clusters/{{ cluster_pkg_folder }}/pki/etcd"
+  become: false
+  run_once: true
+  ignore_errors: true 
+
+- name: fetch the PKI certs to the local {{ cluster_pkg_folder }}/pki
+  fetch:
+    src: /etc/kubernetes/pki/{{ item }}
+    dest: "{{ playbook_dir | replace('/ansible', '') }}/clusters/{{ cluster_pkg_folder }}/pki/"
+    flat: yes
+  become: true   
+  with_items:
+    - ca.crt  
+    - ca.key  
+    - front-proxy-ca.crt  
+    - front-proxy-ca.key  
+    - sa.key
+    - sa.pub
+
+- name: fetch the ETCD PKI certs to the local {{ cluster_pkg_folder }}/pki/etcd
+  fetch:
+    src: /etc/kubernetes/pki/etcd/{{ item }}
+    dest: "{{ playbook_dir | replace('/ansible', '') }}/clusters/{{ cluster_pkg_folder }}/pki/etcd/"
+    flat: yes
+  become: true   
+  with_items:
+    - ca.crt  
+    - ca.key  
+
+- name: setup Kubectl configuration on first master
+  shell: kubectl get nodes
+  register: nodes_out
+
+- debug: msg="{{ nodes_out.stdout_lines }}"
+
+#- name: generate the master account
+#  template:
+#    src: templates/k8s-master-account.j2
+#    dest: /root/kube-master.yml
+
+#- name: install the master account
+#  shell: kubectl apply -f /root/kube-master.yml
+#  register: acct_out
+
+#- debug: msg="{{ acct_out.stdout_lines }}"
+
+#- name: generate the Web UI token
+#  shell: "kubectl -n kube-system describe secret $(kubectl -n kube-system get secret | grep admin-user | awk '{print $1}') | grep token: | sed 's/token:      //' > /root/web-ui-token"
+
+#- name: fetch the Web UI token to the local {{ cluster_pkg_folder }}
+#  fetch:
+#    src: /root/web-ui-token
+#    dest: "{{ playbook_dir | replace('/ansible', '') }}/clusters/{{ cluster_pkg_folder }}/"
+#    flat: yes     
+#  become: true   
+
+#- name: get master node status
+#  shell: kubectl get nodes
+#  register: master_node_out
+
+#- debug: msg="{{ master_node_out.stdout_lines }}"
+

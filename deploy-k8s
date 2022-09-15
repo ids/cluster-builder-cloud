@@ -1,0 +1,105 @@
+#!/bin/bash
+INVENTORY_FILE=$1
+SERVER_WAIT=90s
+REMOTE_USER=ubuntu
+
+export ANSIBLE_DISPLAY_SKIPPED_HOSTS=false
+export ANSIBLE_CONFIG=./ansible.cfg
+
+
+function deploy_k8s () {
+
+    ansible all -i $INVENTORY_FILE -m ping -u $REMOTE_USER
+    if [ $? -ne 0 ]; then
+    echo "FAIL: ${CLUSTER_TYPE_NAME} host access verification failed!"
+    exit 1
+    fi
+    
+    echo
+    echo -e "Building cluster: ${CLUSTER_TYPE_NAME}"
+    ansible-playbook -i $INVENTORY_FILE ansible/ubuntu-k8s.yml  --extra-vars="cluster_pkg_folder=${CLUSTER_PKG_FOLDER}"
+    if [ $? -ne 0 ]; then
+    echo "FAIL: ${CLUSTER_TYPE_NAME} creation failed!"
+    exit 1
+    fi
+
+}
+
+function cluster_info_display() {
+
+  echo
+  echo -e "${TC}-----------------------------------------------------------------------------------${NC}"
+  echo
+  echo -e " Cluster Name    : ${TC}${CLUSTER_NAME}${NC}"
+  echo -e " Cluster Package : ${TC}${CLUSTER_PKG_FOLDER}${NC}"
+  echo
+  echo -e "${TC}-----------------------------------------------------------------------------------${NC}"
+  echo
+
+}
+
+PLATFORM=`uname -ra`
+if [[ $PLATFORM == *"Microsoft"* ]]; then 
+  export ANSIBLE_CONFIG=$PWD/ansible.cfg
+elif [[ $PLATFORM == *"Darwin"* ]]; then
+  VMWARE_APP="VMware Fusion"
+fi
+
+if [ -z "${INVENTORY_FILE}" ]; then
+  read -s "Enter the target cluster folder: " INVENTORY_FILE
+fi
+
+INVENTORY_FILE=./clusters/$INVENTORY_FILE/hosts
+
+if [ ! -f $INVENTORY_FILE ]; then
+  echo
+  echo "Unable to find inventory file @: ${INVENTORY_FILE}"
+  exit 1
+fi
+
+CLUSTER_TYPE=`sed -n '/^cluster_type=/ {s///p;q;}' $INVENTORY_FILE | tr -d '\n' | tr -d '\r'`
+CLUSTER_NAME=`sed -n '/^cluster_name=/ {s///p;q;}' $INVENTORY_FILE | tr -d '\n' | tr -d '\r'`
+REMOTE_USER=`sed -n '/^remote_user=/ {s///p;q;}' $INVENTORY_FILE | tr -d '\n' | tr -d '\r'`
+
+CLUSTER_PKG_PATH=`dirname $INVENTORY_FILE`
+CLUSTER_PKG_FOLDER=${CLUSTER_PKG_PATH//.\/clusters\//} 
+
+if [ -f clusters/$CLUSTER_PKG_FOLDER/.passwords ]; then
+  source clusters/$CLUSTER_PKG_FOLDER/.passwords
+fi
+
+TEMP_SCRIPT_PATH=./tmp/$CLUSTER_PKG_FOLDER
+
+TC=''
+NC=''
+if [ "$TERM" == "xterm-256color" ]; then
+  TC='\033[1;34m'
+  NC='\033[0m' # No Color
+fi 
+
+cluster_info_display
+
+START_TIME=$SECONDS
+
+deploy_k8s
+
+ELAPSED_TIME=$(($SECONDS - $START_TIME))
+echo "Deployed in: $(($ELAPSED_TIME/60)) min $(($ELAPSED_TIME%60)) sec" 
+echo -e "${TC}------------------------------------------------------------${NC}"
+echo
+
+echo -e "The ${TC}kube-config${NC} file can be found at clusters/${TC}${CLUSTER_PKG_FOLDER}/kube-config${NC}"
+echo 
+echo -e "${TC}kubectl --kubeconfig=clusters/${CLUSTER_PKG_FOLDER}/kube-config get pods --all-namespaces${NC}"
+#echo 
+#echo -e "To connect to the Kubernetes Dashboard:"
+#echo
+#echo -e "${TC}kubectl --kubeconfig=clusters/${CLUSTER_PKG_FOLDER}/kube-config proxy${NC}"
+#echo
+
+#echo -e "Authenticate using the token found in clusters/${TC}${CLUSTER_PKG_FOLDER}/web-ui-token${NC}"
+echo
+echo -e "${TC}------------------------------------------------------------${NC}"
+echo
+
+  
