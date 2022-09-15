@@ -14,13 +14,17 @@ In this approach, we use:
 2) Terraform to create the AWS EC2 resources required
 3) Ansible to provision the EC2 Instances with Kubernetes
 
-## Tools Required:
+> Currently targeting AWS, but should be ported for Azure as well in the near future.
 
--  [Packer](https://www.packer.io/downloads) 
--  [Terraform](https://www.terraform.io/downloads)
--  [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
+## Required:
+
+- [Packer](https://www.packer.io/downloads) 
+- [Terraform](https://www.terraform.io/downloads)
+- [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
 
 All easily downloaded/installed for the platform of your choice.  I grab the Hashicorp binaries directly from them, but usually just `sudo snap/apt-get install ansible` on Ubuntu.
+
+You will also need an __AWS Account__.
 
 ## Setup
 
@@ -35,7 +39,8 @@ export AWS_SECRET_ACCESS_KEY=TP/PY3+BJnprPqJA9eKGXXX
 
 # Instructions
 
-This currently builds a very barebones Kubernetes EC2 cluster, but can be further customized and extended.
+This currently builds a very barebones Kubernetes EC2 cluster, but can always be further customized and extended... it's IaC!
+
 
 ## Phase 1 - Packing the AMI
 

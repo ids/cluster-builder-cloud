@@ -89,8 +89,10 @@ echo -e "${TC}------------------------------------------------------------${NC}"
 echo
 
 echo -e "The ${TC}kube-config${NC} file can be found at clusters/${TC}${CLUSTER_PKG_FOLDER}/kube-config${NC}"
+echo -e "Note: it is only usable from within the EC2 subnet in which the cluster resides."
 echo 
-echo -e "${TC}kubectl --kubeconfig=clusters/${CLUSTER_PKG_FOLDER}/kube-config get pods --all-namespaces${NC}"
+echo -e "${TC}ssh ubuntu@<aws public dns address of master node>${NC}"
+echo -e "${TC}sudo kubectl get pods --all-namespaces${NC}"
 #echo 
 #echo -e "To connect to the Kubernetes Dashboard:"
 #echo
